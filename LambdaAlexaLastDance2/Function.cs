@@ -74,45 +74,31 @@ public class Function
             //DEBEMOS LOCALIZAR EL TIPO DE INTENT POR SU NAME
             var intentRequest = (IntentRequest)input.Request;
             //AQUI YA PREGUNTAMOS SOBRE EL ID DE NUESTRO INTENT
-            if (intentRequest.Intent.Name == "buscarpeliculaid")
+            if (intentRequest.Intent.Name == "peliculasactor")
             {
                 log.LogLine("Nos están pidiendo datos!!!");
                 //RECUPERAMOS LA INFORMACIÓN DEL SLOT/VARIABLES QUE VIENE CON EL INTENT
                 string slotJson = JsonConvert.SerializeObject(intentRequest.Intent.Slots);
                 //RECUPERAMOS EL ID DE LA PELICULA
-                int idPelicula = this.GetSlotValueIDPelicula(slotJson);
+                string actor = this.GetSlotValueActorPelicula(slotJson);
                 //BUSCAMOS LA PELICULA
-                Pelicula peli = await repo.FindPeliculaAsync(idPelicula);
+                List<Pelicula> pelis = await repo.GetPeliculasByActorAsync(actor);
                 //CREAMOS UNA RESPUESTA 
                 innerResponse = new PlainTextOutputSpeech();
-                if (peli == null)
+                if (pelis == null)
                 {
                     //LA PELI NO EXISTE
                     (innerResponse as PlainTextOutputSpeech).Text =
-                        "No existe la pelicula con el ID: " + idPelicula;
+                        "No existen peliculas con el actor: " + actor;
                 }
                 else
                 {
-                    (innerResponse as PlainTextOutputSpeech).Text = "Titulo: "
-                        + peli.Titulo + ", Argumento: " + peli.Argumento;
-                }
-            }
-            else if (intentRequest.Intent.Name == "videopeliculaid")
-            {
-                log.LogLine("Pidiendo video!!!");
-                string slotJson = JsonConvert.SerializeObject(intentRequest.Intent.Slots);
-                int idPelicula = this.GetSlotValueIDPelicula(slotJson);
-                Pelicula peli = await repo.FindPeliculaAsync(idPelicula);
-                //CREAMOS UNA RESPUESTA
-                innerResponse = new PlainTextOutputSpeech();
-                if (peli == null)
-                {
-                    (innerResponse as PlainTextOutputSpeech).Text =
-                        "No existe la pelicula con el ID: " + idPelicula;
-                }
-                else
-                {
-
+                    (innerResponse as PlainTextOutputSpeech).Text = "Las pelis con el actor " + actor + " son las siguientes: ";
+                    foreach (Pelicula peli in pelis)
+                    {
+                        (innerResponse as PlainTextOutputSpeech).Text = "Titulo: "
+                            + peli.Titulo + ", Argumento: " + peli.Argumento;
+                    }
                 }
             }
         }
@@ -128,13 +114,13 @@ public class Function
         return response;
     }
 
-    public int GetSlotValueActorPelicula(string dataJson)
+    public string GetSlotValueActorPelicula(string dataJson)
     {
         //CREAMOS UN OJETO JSON CON NEWTON
         var jsonObject = JObject.Parse(dataJson);
         var data = (JObject)jsonObject["actor"];
         var nombre = (string)data["name"];
-        var actor = (string)data["value"];
-        return int.Parse(actor);
+        var actores = (string)data["value"];
+        return actores;
     }
 }

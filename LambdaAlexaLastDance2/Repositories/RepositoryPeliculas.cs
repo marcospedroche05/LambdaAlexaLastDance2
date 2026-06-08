@@ -21,5 +21,15 @@ namespace LambdaAlexaLastDance2.Repositories
         {
             return await this.context.Peliculas.FirstOrDefaultAsync(x => x.IdPelicula == id);
         }
+
+        public async Task<List<Pelicula>> GetPeliculasByActorAsync(string actor)
+        {
+            // Es buena práctica limpiar los espacios en blanco del parámetro por si acaso
+            string actorBuscado = actor.Trim();
+
+            return await this.context.Peliculas
+                .Where(x => x.Actores.Contains(actorBuscado))
+                .ToListAsync();
+        }
     }
 }
